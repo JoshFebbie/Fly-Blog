@@ -100,6 +100,7 @@ input.sum-input {
 
 input.log-input {
   color: black;
+  font-weight: bolder;
 }
 
 input {
