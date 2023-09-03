@@ -17,11 +17,12 @@ const secret = '1z2x3c4v5b6c5x4z3';
 app.use(cors({credentials: true, origin: "http://localhost:3000"}));
 app.use(express.json());
 app.use(cookieParser());
+app.use('/uploads', express.static(__dirname + '/uploads'));
 
 mongoose.connect('mongodb+srv://joshdfebbie:feVxRRu15zpQDe7M@cluster0.dspooud.mongodb.net/?retryWrites=true&w=majority')
 
 app.post('/register', async (req, res) => {
-    const { username, password } = req.body;
+    const {username, password} = req.body;
     try {
         const userDoc = await User.create({
           username,
@@ -35,12 +36,12 @@ app.post('/register', async (req, res) => {
 })
 
 app.post('/login', async (req, res) => {
-    const { username, password } = req.body;
-    const userDoc = await User.findOne({ username });
+    const {username, password} = req.body;
+    const userDoc = await User.findOne({username});
     const passOk = bcrypt.compareSync(password, userDoc.password);
     if (passOk) {
     //logged in
-        jwt.sign({ username, id:userDoc._id}, secret, {}, (err, token) => {
+        jwt.sign({username, id:userDoc._id}, secret, {}, (err, token) => {
         if (err) throw err;
         res.cookie("token", token).json({
             id: userDoc._id,
@@ -53,10 +54,10 @@ app.post('/login', async (req, res) => {
 })
 
 app.get("/profile", (req, res) => {
-    const { token } = req.cookies;
-    jwt.verify(token, secret, {}, (err, payload) => {
-        if (err) return res.status(401).json(err);
-        res.json(payload);
+    const {token} = req.cookies;
+    jwt.verify(token, secret, {}, (err, info) => {
+        if (err) throw err;
+        res.json(info);
     });
 })
 
@@ -73,8 +74,8 @@ app.post("/post", uploadMiddleware.single("file"), async(req, res) => {
 
     const { token } = req.cookies;
     jwt.verify(token, secret, {}, async (err, info) => {
-        if (err) return res.status(401).json(err);
-        const { title, summary, content } = req.body;
+        if (err) throw err;
+    const { title, summary, content } = req.body;
     const postDoc = await Post.create({
         title,
         summary,
@@ -85,12 +86,15 @@ app.post("/post", uploadMiddleware.single("file"), async(req, res) => {
         res.json(postDoc);
     });
 
-    
-    
-});
+    });
 
 app.get("/post", async (req, res) => {
-    res.json(await Post.find())
+    res.json(
+      await Post.find()
+        .populate("author", ["username"])
+        .sort({createdAt: -1})
+        .limit(20) 
+    );
 });
 
 app.listen(4000, () => console.log("Server running on port 4000"));
