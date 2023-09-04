@@ -97,6 +97,12 @@ app.get("/post", async (req, res) => {
     );
 });
 
+app.get("/post/:id", async (req, res) => {
+    const {id} = req.params;
+    const postDoc = await Post.findById(id).populate("author", ["username"]);
+    res.json(postDoc);
+});
+
 app.listen(4000, () => console.log("Server running on port 4000"));
 
 //mongodb+srv://joshdfebbie:feVxRRu15zpQDe7M@cluster0.dspooud.mongodb.net/?retryWrites=true&w=majority

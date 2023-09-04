@@ -1,7 +1,6 @@
 import { NavLink } from "react-router-dom"
-import { useEffect, useContext } from "react"
+import { useEffect, useContext, useState } from "react"
 import { UserContext } from "./UserContext"
-
 
 export default function Header() {
   const {setUserInfo, userInfo} = useContext(UserContext)
@@ -32,7 +31,7 @@ export default function Header() {
           {username && (
             <>
             <NavLink to="/create">Create New Post</NavLink>
-            <a onClick={logout}>Logout</a>
+            <a onClick={logout}>Logout ({username})</a>
             </>
           )}
           {!username && (
