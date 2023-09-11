@@ -73,20 +73,72 @@ app.post("/post", uploadMiddleware.single("file"), async(req, res) => {
     fs.renameSync(path, newPath);
 
     const { token } = req.cookies;
-    jwt.verify(token, secret, {}, async (err, info) => {
+      jwt.verify(token, secret, {}, async (err, info) => {
         if (err) throw err;
-    const { title, summary, content } = req.body;
-    const postDoc = await Post.create({
-        title,
-        summary,
-        content,
-        cover: newPath,
-        author: info.id,
-    })
+        const { title, summary, content } = req.body;
+        const postDoc = await Post.create({
+            title,
+            summary,
+            content,
+            cover: newPath,
+            author: info.id,
+        });
         res.json(postDoc);
     });
 
+});
+
+app.put("/post", uploadMiddleware.single("file"), async (req, res) => {
+   let newPath = null;
+   if (req.file)  {
+    const {originalname, path} = req.file;
+    const parts = originalname.split(".");
+    const ext = parts[parts.length - 1];
+    newPath = path + "." + ext;
+    fs.renameSync(path, newPath);
+   }
+
+//    const {token} = req.cookies;
+//    jwt.verify(token, secret, {}, async (err, info) => {
+//     if (err) throw err;
+//     const { id, title, summary, content } = req.body;
+//     const postDoc = await Post.findById(id);
+//     const isAuthor = JSON.stringify(postDoc.author) === JSON.stringify(info.id);
+//     if (!isAuthor) {
+//         return res.status(400).json("You are not the author of this post");
+//     }
+//     await postDoc.update({
+//         title,
+//         summary, 
+//         content,
+//         cover: newPath ? newPath : postDoc.cover,
+//      })
+//     await postDoc.save();
+//     res.json(postDoc);
+//     });
+    
+// });
+
+const {token} = req.cookies;
+   jwt.verify(token, secret, {}, async (err, info) => {
+    if (err) throw err;
+    const { id, title, summary, content } = req.body;
+    const postDoc = await Post.findById(id);
+    const isAuthor = JSON.stringify(postDoc.author) === JSON.stringify(info.id);
+    if (!isAuthor) {
+        return res.status(400).json("You are not the author of this post");
+    }
+    
+    postDoc.title = title;
+    postDoc.summary = summary;
+    postDoc.content = content;
+    postDoc.cover = newPath ? newPath : postDoc.cover;
+    await postDoc.save();
+    
+    res.json(postDoc);
     });
+});
+
 
 app.get("/post", async (req, res) => {
     res.json(
